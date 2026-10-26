@@ -507,6 +507,7 @@
   .status-popup-settle { width:100%; border:0; border-radius:999px; padding:11px; background:var(--gold); color:#fff; font-size:13px; font-weight:700; box-shadow:0 8px 20px rgba(0,0,0,.16); }
   .status-popup-settle { width:100%; border:0; border-radius:999px; padding:11px; background:var(--gold); color:#fff; font-size:13px; font-weight:700; box-shadow:0 8px 20px rgba(0,0,0,.16); }
   .status-popup-settle:active { transform:scale(.98); }
+  #status-popup-edit,#status-popup-settle{width:auto;flex:1;min-width:110px}
 
   /* Consistent line-icon style shared by receipt action buttons */
   .action-icon svg { width:18px; height:18px; display:block; }
@@ -1303,7 +1304,7 @@
     #print-prices-root thead { display:table-header-group; }
   }
 
-  /* v9.8.6 — Add Name: a violet pill next to every Debt / Momo / Change chip.
+  /* v9.8.7 — Add Name: a violet pill next to every Debt / Momo / Change chip.
      Works in light + dark; no pricing, storage-key or receipt-calculation changes. */
   :root { --name-ink:#5B3FD0; --name-bg:rgba(91,63,208,.10); --name-line:rgba(91,63,208,.38); }
   body.dark { --name-ink:#BDAEFF; --name-bg:rgba(189,174,255,.14); --name-line:rgba(189,174,255,.40); }
@@ -1324,6 +1325,13 @@
   .name-input::placeholder { color:var(--ink-soft); opacity:.8; font-weight:500; }
   .name-remove { display:block; margin:10px auto 0; border:0; background:none; color:var(--brick); font:inherit; font-size:12px; font-weight:700; padding:6px 10px; }
   .name-remove[hidden] { display:none; }
+  /* v9.8.7 edit controls */
+  .settlement-edit-btn,.receipt-customer-edit{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);border-radius:999px;padding:6px 10px;font:inherit;font-size:10px;font-weight:700;line-height:1.2}
+  .settlement-edit-btn.debt{color:#7C0607;background:rgba(124,6,7,.07)}.settlement-edit-btn.momo{color:#16845B;background:rgba(22,132,91,.07)}.settlement-edit-btn.change{color:#3976B9;background:rgba(57,118,185,.07)}
+  body.dark .settlement-edit-btn.debt{color:#F0A5A5}body.dark .settlement-edit-btn.momo{color:#73D9AD}body.dark .settlement-edit-btn.change{color:#91BFF0}
+  .receipt-customer-edit{margin:7px 0 0 5px;color:#9A6A13;background:rgba(183,121,31,.09);vertical-align:middle;padding:6px 9px}
+  .receipt-customer-info{margin:8px 0;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:var(--paper);font-size:11px;line-height:1.45;overflow-wrap:anywhere}.receipt-customer-info[hidden]{display:none}
+  .edit-fields{display:grid;gap:10px;margin-top:12px}.edit-fields label{display:grid;gap:5px;font-size:11px;font-weight:700;color:var(--ink-soft)}.edit-fields input,.edit-fields textarea{width:100%;box-sizing:border-box;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font:inherit;font-size:15px}.edit-fields textarea{min-height:74px}
 </style>
 </head>
 <body>
@@ -1607,7 +1615,7 @@
       <div class="status-popup-head"><h3 id="status-popup-title">Change</h3><button class="status-popup-close" id="status-popup-close" aria-label="Close">×</button></div>
       <div class="status-popup-amount" id="status-popup-amount">¢0.00</div>
       <div class="status-popup-name" id="status-popup-name" hidden></div>
-      <button class="status-popup-settle" id="status-popup-settle">Settled</button>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="status-popup-settle" id="status-popup-edit">✎ Edit</button><button class="status-popup-settle" id="status-popup-settle">Settled</button></div>
     </div>
   </div>
 
@@ -1639,10 +1647,12 @@
         <div class="receipt-summary-line receipt-new-total" id="receipt-new-total-row" hidden><span>NEW TOTAL</span><strong id="receipt-total">¢0.00</strong></div>
         <div class="receipt-summary-line receipt-discount-row" id="receipt-discount-row" hidden><span>DISCOUNT</span><strong id="receipt-discount">-¢0.00</strong></div>
       </div>
+      <div class="receipt-customer-info" id="receipt-customer-info" hidden></div>
       <div class="receipt-actions">
         <button class="primary" id="receipt-close-btn">Done</button>
         <button class="secondary receipt-share-btn" id="receipt-share-btn">Share</button>
         <button class="secondary" id="receipt-copy-btn">Copy</button>
+        <button type="button" class="secondary receipt-customer-edit" id="receipt-customer-edit-current" aria-label="Edit customer details">✎</button>
       </div>
     </div>
   </div>
@@ -1699,6 +1709,8 @@
     </div>
   </div>
 
+  <div class="entry-overlay" id="settlement-edit-overlay" hidden><div class="entry-card" role="dialog" aria-modal="true"><div class="entry-head"><span class="entry-type" id="settlement-edit-title">Edit Debt</span><button type="button" class="entry-close" id="settlement-edit-close">×</button></div><div class="edit-fields"><label>Entry name<input id="settlement-edit-name" maxlength="60"></label><label id="settlement-edit-original-label">Original amount (¢)<input id="settlement-edit-original" type="number" min="0.01" step="0.01"></label><label id="settlement-edit-paid-label">Amount already paid (¢)<input id="settlement-edit-paid" type="number" min="0" step="0.01"></label><label id="settlement-edit-amount-label">Amount (¢)<input id="settlement-edit-amount" type="number" min="0.01" step="0.01"></label><div class="entry-error" id="settlement-edit-error" hidden>Check the amounts and try again.</div></div><div class="entry-actions"><button class="entry-cancel" id="settlement-edit-cancel">Cancel</button><button class="entry-save" id="settlement-edit-save">Save changes</button></div></div></div>
+  <div class="entry-overlay" id="customer-edit-overlay" hidden><div class="entry-card" role="dialog" aria-modal="true"><div class="entry-head"><span class="entry-type" id="customer-edit-title">Customer details</span><button type="button" class="entry-close" id="customer-edit-close">×</button></div><div class="edit-fields"><label>Buyer name (optional)<input id="customer-edit-name" maxlength="80" placeholder="e.g. Kwame"></label><label>Extra information (optional)<textarea id="customer-edit-note" maxlength="240" placeholder="e.g. Office delivery"></textarea></label></div><div class="entry-actions"><button class="entry-cancel" id="customer-edit-cancel">Cancel</button><button class="entry-save" id="customer-edit-save">Save details</button></div></div></div>
   <div class="sheet-overlay" id="sheet-overlay" hidden>
     <div class="sheet-card" id="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
       <div class="sheet-icon" id="sheet-icon"></div>
@@ -1890,7 +1902,7 @@ window.addEventListener("error", function(e) {
   defaultItems.forEach(function(i){ i.photo = null; });
 
   var APP_VERSION = 'v9.8.5';
-  var BUILD_VERSION = 'v9.8.6.29';
+  var BUILD_VERSION = 'v9.8.7';
   var PRICE_MIGRATION_VERSION_KEY = 'price-list-price-migration-version-v1';
   var items = loadItems();
 
@@ -1949,6 +1961,7 @@ window.addEventListener("error", function(e) {
   var receiptActionIndex = null;
   var statusPopupType = null;
   var statusPopupId = null;
+  var settlementEditState=null, customerEditReceiptId=null, currentReceiptCustomerId=null;
   var PENDING_RESTORE_KEY = 'price-list-pending-restore-v1';
   var pendingRestoredReceipt = loadJson(PENDING_RESTORE_KEY, null);
   if (pendingRestoredReceipt && !pendingRestoredReceipt.receiptNumber) pendingRestoredReceipt = null;
@@ -2975,7 +2988,7 @@ window.addEventListener("error", function(e) {
       receiptNo='Receipt #' + String(receiptCounter).padStart(4,'0');
       createdAt=new Date().toISOString();
     }
-    var receipt={receiptId:(restoring && restoring.receiptId) || newReceiptId(),number:receiptNo,total:total,grossTotal:grossTotal,discount:discount,createdAt:createdAt,cartIndex:activeCartIndex,items:entries.map(function(e){
+    var receipt={receiptId:(restoring && restoring.receiptId) || newReceiptId(),number:receiptNo,total:total,grossTotal:grossTotal,discount:discount,createdAt:createdAt,cartIndex:activeCartIndex,customerName:(restoring&&restoring.originalReceipt&&restoring.originalReceipt.customerName)||undefined,customerNote:(restoring&&restoring.originalReceipt&&restoring.originalReceipt.customerNote)||undefined,items:entries.map(function(e){
       return {id:e.item.id,key:e.key,name:e.item.name,mode:e.mode,fraction:e.fraction,qty:e.qty,subtotal:(priceForMode(e.item,e.mode,e.fraction)||0)*e.qty};
     })};
     if (restoring) {
@@ -2994,6 +3007,7 @@ window.addEventListener("error", function(e) {
     if(receiptDiscountRow) receiptDiscountRow.hidden=discount<=0;
     if(receiptNewTotalRow) receiptNewTotalRow.hidden=discount<=0;
     if(discount>0) document.getElementById('receipt-discount').textContent='-¢'+formatCedis(discount);
+    currentReceiptCustomerId=receipt.receiptId||'';var customerInfo=document.getElementById('receipt-customer-info');if(customerInfo){customerInfo.innerHTML=customerInfoHtml(receipt);customerInfo.hidden=!(receipt.customerName||receipt.customerNote)}
     document.getElementById('receipt-panel').hidden=false;
     cart={}; discounts[activeCartIndex]=0; saveCart(); renderCart(); renderHistory();
   }
@@ -3040,6 +3054,16 @@ window.addEventListener("error", function(e) {
     saveJson('price-list-change-owed-v1', changeOwed);
     saveJson('price-list-momo-payments-v1', momoPayments);
   }
+  function debtOriginalAmount(rec){return Math.max(0,Number(rec&&rec.totalAmount!=null?rec.totalAmount:rec&&rec.amount)||0)}
+  function debtPaidAmount(rec){return Math.max(0,Number(rec&&rec.paidAmount)||0)}
+  function debtOutstanding(rec){return Math.max(0,debtOriginalAmount(rec)-debtPaidAmount(rec))}
+  function openSettlementEditor(type,id){var rec=settlementArray(type).find(function(x){return String(x.id)===String(id)});if(!rec)return;settlementEditState={type:type,id:id};var debt=type==='debt';var t=document.getElementById('settlement-edit-title');t.textContent='Edit '+(debt?'Debt':type==='momo'?'Momo':'Change');t.className='entry-type '+type;document.getElementById('settlement-edit-name').value=recordName(rec);document.getElementById('settlement-edit-original-label').hidden=!debt;document.getElementById('settlement-edit-paid-label').hidden=!debt;document.getElementById('settlement-edit-amount-label').hidden=debt;document.getElementById('settlement-edit-original').value=debt?debtOriginalAmount(rec).toFixed(2):'';document.getElementById('settlement-edit-paid').value=debt?debtPaidAmount(rec).toFixed(2):'';document.getElementById('settlement-edit-amount').value=debt?'':(Number(rec.amount)||0).toFixed(2);document.getElementById('settlement-edit-error').hidden=true;document.getElementById('settlement-edit-overlay').hidden=false}
+  function closeSettlementEditor(){settlementEditState=null;document.getElementById('settlement-edit-overlay').hidden=true}
+  function saveSettlementEditor(){if(!settlementEditState)return;var st=settlementEditState,rec=settlementArray(st.type).find(function(x){return String(x.id)===String(st.id)});if(!rec){closeSettlementEditor();return}var nm=document.getElementById('settlement-edit-name').value.replace(/\s+/g,' ').trim().slice(0,60);if(st.type==='debt'){var total=Number(document.getElementById('settlement-edit-original').value),paid=Number(document.getElementById('settlement-edit-paid').value);if(!isFinite(total)||total<=0||!isFinite(paid)||paid<0||paid>total){document.getElementById('settlement-edit-error').hidden=false;return}rec.totalAmount=Number(total.toFixed(2));rec.paidAmount=Number(paid.toFixed(2));rec.amount=Number((total-paid).toFixed(2))}else{var amount=Number(document.getElementById('settlement-edit-amount').value);if(!isFinite(amount)||amount<=0){document.getElementById('settlement-edit-error').hidden=false;return}rec.amount=Number(amount.toFixed(2))}if(nm)rec.name=nm;else delete rec.name;saveSettlements();closeSettlementEditor();renderSettlementList();renderHistory();renderReports();showToast('Entry updated')}
+  function customerInfoHtml(r){if(!r||(!String(r.customerName||'').trim()&&!String(r.customerNote||'').trim()))return '';return '<div class="receipt-customer-info"><strong>Customer details</strong>'+(r.customerName?'<div>'+escapeHtml(r.customerName)+'</div>':'')+(r.customerNote?'<div>'+escapeHtml(r.customerNote)+'</div>':'')+'</div>'}
+  function openCustomerEditor(index){var r=receipts[Number(index)];if(!r)return;customerEditReceiptId=r.receiptId||'';if(!customerEditReceiptId){customerEditReceiptId=newReceiptId();r.receiptId=customerEditReceiptId;saveJson('price-list-receipts-v1',receipts)}document.getElementById('customer-edit-title').textContent=(r.number||'Receipt')+' · Customer details';document.getElementById('customer-edit-name').value=r.customerName||'';document.getElementById('customer-edit-note').value=r.customerNote||'';document.getElementById('customer-edit-overlay').hidden=false}
+  function closeCustomerEditor(){customerEditReceiptId=null;document.getElementById('customer-edit-overlay').hidden=true}
+  function saveCustomerEditor(){if(!customerEditReceiptId)return;var r=receipts.find(function(x){return String(x.receiptId||'')===String(customerEditReceiptId)});if(!r){closeCustomerEditor();return}var nm=document.getElementById('customer-edit-name').value.replace(/\s+/g,' ').trim().slice(0,80),note=document.getElementById('customer-edit-note').value.trim().slice(0,240);if(nm)r.customerName=nm;else delete r.customerName;if(note)r.customerNote=note;else delete r.customerNote;saveJson('price-list-receipts-v1',receipts);var info=document.getElementById('receipt-customer-info');if(info&&String(r.receiptId||'')===String(currentReceiptCustomerId||'')){info.innerHTML=customerInfoHtml(r);info.hidden=!(r.customerName||r.customerNote)}closeCustomerEditor();renderHistory();renderReceiptHistory();showToast('Customer details saved')}
   function getReceiptSettlements(receiptRef) {
     var receiptId = receiptRef && typeof receiptRef === 'object' ? receiptRef.receiptId : String(receiptRef||'');
     var receiptNumber = receiptRef && typeof receiptRef === 'object' ? String(receiptRef.number||'') : String(receiptRef||'');
@@ -3056,7 +3080,7 @@ window.addEventListener("error", function(e) {
     }
     return { debt: findLatest(unsettledDebts), change: findLatest(changeOwed), momo: findLatest(momoPayments) };
   }
-  // v9.8.6 — optional name/description on every Debt / Momo / Change record.
+  // v9.8.7 — optional name/description on every Debt / Momo / Change record.
   function recordName(rec) { return rec && rec.name ? String(rec.name) : ''; }
   function nameBtnHtml(type, rec) {
     var nm = recordName(rec);
@@ -3112,8 +3136,8 @@ window.addEventListener("error", function(e) {
       details += '<div class="status-detail-row change"><span class="status-detail-label">Change owed'+nameSuffix(s.change)+'</span><span class="status-detail-amount">¢'+formatCedis(s.change.amount)+'</span><button type="button" class="status-detail-settle" data-settle-chip="change" data-status-id="'+escapeHtml(String(s.change.id))+'">Settle</button></div>';
     }
     if (s.debt) {
-      chips += '<span class="chip-group"><button type="button" class="status-chip debt" data-status-chip="debt" data-status-id="'+escapeHtml(String(s.debt.id))+'">Debt:<span class="chip-amt">'+chipAmount(s.debt.amount)+'</span></button>'+nameBtnHtml('debt', s.debt)+'</span>';
-      details += '<div class="status-detail-row debt"><span class="status-detail-label">Debt owed'+nameSuffix(s.debt)+'</span><span class="status-detail-amount">¢'+formatCedis(s.debt.amount)+'</span><button type="button" class="status-detail-settle" data-settle-chip="debt" data-status-id="'+escapeHtml(String(s.debt.id))+'">Settle</button></div>';
+      chips += '<span class="chip-group"><button type="button" class="status-chip debt" data-status-chip="debt" data-status-id="'+escapeHtml(String(s.debt.id))+'">Debt:<span class="chip-amt">'+chipAmount(debtOutstanding(s.debt))+'</span></button>'+nameBtnHtml('debt', s.debt)+'</span>';
+      details += '<div class="status-detail-row debt"><span class="status-detail-label">Debt owed'+nameSuffix(s.debt)+'</span><span class="status-detail-amount">¢'+formatCedis(debtOutstanding(s.debt))+'</span><button type="button" class="status-detail-settle" data-settle-chip="debt" data-status-id="'+escapeHtml(String(s.debt.id))+'">Settle</button></div>';
     }
     if (s.momo) {
       chips += '<span class="chip-group"><button type="button" class="status-chip momo" data-status-chip="momo" data-status-id="'+escapeHtml(String(s.momo.id))+'">Momo:<span class="chip-amt">'+chipAmount(s.momo.amount)+'</span></button>'+nameBtnHtml('momo', s.momo)+'</span>';
@@ -3250,7 +3274,7 @@ window.addEventListener("error", function(e) {
     var type=settlementView, isDebt=type==='debt', isMomo=type==='momo', data=settlementArray(type);
     document.getElementById('settlement-title').textContent = isDebt ? 'Unsettled Debts' : isMomo ? 'Momo Payments' : 'Change Owed';
     var settlementTotalEl=document.getElementById('settlement-total');
-    if(settlementTotalEl) settlementTotalEl.innerHTML='Total <strong>¢'+formatCedis(data.reduce(function(sum,x){ return sum+(Number(x.amount)||0); },0))+'</strong>';
+    if(settlementTotalEl) settlementTotalEl.innerHTML='Total <strong>¢'+formatCedis(data.reduce(function(sum,x){ return sum+(type==='debt'?debtOutstanding(x):(Number(x.amount)||0)); },0))+'</strong>';
     document.getElementById('settlement-debt-tab').classList.toggle('active',isDebt);
     document.getElementById('settlement-change-tab').classList.toggle('active',type==='change');
     document.getElementById('settlement-momo-tab').classList.toggle('active',isMomo);
@@ -3260,7 +3284,7 @@ window.addEventListener("error", function(e) {
     var actionLabel = isDebt ? 'Mark as paid' : isMomo ? 'Clear' : 'Mark as collected';
     list.innerHTML=data.map(function(x,i){
       var d=new Date(x.createdAt), when=isNaN(d.getTime())?'':d.toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
-      var sourceItems=Array.isArray(x.items)&&x.items.length?x.items:((receipts.find(function(r){return (x.receiptId && r.receiptId===x.receiptId) || (!x.receiptId && String(r.number||'')===String(x.receiptNumber||''));})||{}).items||[]); var itemsHtml=sourceItems.length?'<ul class="settlement-items">'+sourceItems.map(function(it){var tag=it.mode==='bulk'?(it.fraction===0.5?' (Half)':it.fraction===0.25?' (Quarter)':''):''; return '<li>'+escapeHtml(it.name+tag)+' × '+(Number(it.qty)||0)+'</li>';}).join('')+'</ul>':''; return '<div class="settlement-item"><div class="settlement-item-top"><strong>'+escapeHtml(x.receiptNumber)+'</strong><span class="settlement-amount">¢'+formatCedis(x.amount)+'</span></div>'+itemsHtml+'<div class="settlement-meta">Recorded '+escapeHtml(when)+'</div><div class="settlement-actions">'+nameBtnHtml(type,x)+'<button class="settlement-action" data-settlement-complete="'+i+'">'+actionLabel+'</button></div></div>';
+      var sourceItems=Array.isArray(x.items)&&x.items.length?x.items:((receipts.find(function(r){return (x.receiptId && r.receiptId===x.receiptId) || (!x.receiptId && String(r.number||'')===String(x.receiptNumber||''));})||{}).items||[]); var itemsHtml=sourceItems.length?'<ul class="settlement-items">'+sourceItems.map(function(it){var tag=it.mode==='bulk'?(it.fraction===0.5?' (Half)':it.fraction===0.25?' (Quarter)':''):''; return '<li>'+escapeHtml(it.name+tag)+' × '+(Number(it.qty)||0)+'</li>';}).join('')+'</ul>':''; return '<div class="settlement-item"><div class="settlement-item-top"><strong>'+escapeHtml(x.receiptNumber)+'</strong><span class="settlement-amount">¢'+formatCedis(type==='debt'?debtOutstanding(x):x.amount)+'</span></div>'+itemsHtml+'<div class="settlement-meta">Recorded '+escapeHtml(when)+'</div><div class="settlement-actions">'+nameBtnHtml(type,x)+'<button type="button" class="settlement-edit-btn '+type+'" data-settlement-edit-type="'+type+'" data-settlement-edit-id="'+escapeHtml(String(x.id))+'">✎ Edit</button><button class="settlement-action" data-settlement-complete="'+i+'">'+actionLabel+'</button></div></div>';
     }).join('');
   }
   function completeSettlement(index) {
@@ -3409,6 +3433,7 @@ window.addEventListener("error", function(e) {
         receiptId:r.receiptId || newReceiptId(),
         number:String(r.number), total:Number(r.total)||0, grossTotal:r.grossTotal==null?Number(r.total)||0:Number(r.grossTotal)||0,
         discount:Number(r.discount)||0, createdAt:String(r.createdAt), cartIndex:Number(r.cartIndex)||0,
+        customerName:String(r.customerName||''), customerNote:String(r.customerNote||''),
         items:r.items.map(function(i){ return {id:i.id==null?null:Number(i.id),key:i.key||'',name:String(i.name||''),mode:i.mode||'bulk',fraction:i.fraction==null?1:Number(i.fraction),qty:Number(i.qty)||0,subtotal:Number(i.subtotal)||0}; })
       };
     });
@@ -3564,7 +3589,7 @@ function renderHistory(){
         var unit=qty>0 ? subtotal/qty : 0;
         return '<li>'+escapeHtml(i.name)+' — '+mode+' × '+qty+'<span class="receipt-item-pricing">Unit Price - ¢'+formatCedis(unit)+(qty>1 ? '<span class="price-divider">||</span><span class="price-total">Total - ¢'+formatCedis(subtotal)+'</span>' : '')+'</span></li>';
       }).join('');
-      return '<div class="history-card" data-history-index="'+idx+'" data-receipt-index="'+idx+'"><div class="history-top"><span class="history-receipt">'+escapeHtml(r.number)+'</span><span class="history-total">¢'+formatCedis(r.total)+'</span></div>'+receiptStatusChipsHtml(r)+'<div class="history-meta">'+when+'</div><ul class="history-items">'+itemsHtml+'</ul><button class="receipt-history-share" data-share-receipt="'+idx+'">Share receipt</button><button class="receipt-copy-btn" data-copy-receipt="'+idx+'">Copy</button>'+receiptDiscountChipHtml(r)+'</div>';
+      return '<div class="history-card" data-history-index="'+idx+'" data-receipt-index="'+idx+'"><div class="history-top"><span class="history-receipt">'+escapeHtml(r.number)+'</span><span class="history-total">¢'+formatCedis(r.total)+'</span></div>'+receiptStatusChipsHtml(r)+'<div class="history-meta">'+when+'</div><ul class="history-items">'+itemsHtml+'</ul><button class="receipt-history-share" data-share-receipt="'+idx+'">Share receipt</button><button class="receipt-copy-btn" data-copy-receipt="'+idx+'">Copy</button><button type="button" class="receipt-customer-edit" data-customer-receipt="'+idx+'" aria-label="Edit customer details">✎</button>'+customerInfoHtml(r)+receiptDiscountChipHtml(r)+'</div>';
     }).join('');
     updateReceiptCount();
     renderReceiptHistory();
@@ -3797,7 +3822,7 @@ function renderHistory(){
         var unit=qty>0 ? subtotal/qty : 0;
         return '<li>'+escapeHtml(i.name)+' — '+mode+' × '+qty+'<span class="receipt-item-pricing">Unit Price - ¢'+formatCedis(unit)+(qty>1 ? '<span class="price-divider">||</span><span class="price-total">Total - ¢'+formatCedis(subtotal)+'</span>' : '')+'</span></li>';
       }).join('');
-      return '<div class="receipt-history-item expanded" data-receipt-index="'+idx+'"><div class="rh-top"><span class="rh-no">'+escapeHtml(r.number)+'</span><span class="rh-total">¢'+formatCedis(r.total)+'</span></div>'+receiptStatusChipsHtml(r)+'<div class="rh-meta">'+when+'</div><ul class="rh-items">'+itemsHtml+'</ul><button class="receipt-history-share" data-share-receipt="'+idx+'">Share as image</button><button class="receipt-copy-btn" data-copy-receipt="'+idx+'">Copy</button>'+receiptDiscountChipHtml(r)+'</div>';
+      return '<div class="receipt-history-item expanded" data-receipt-index="'+idx+'"><div class="rh-top"><span class="rh-no">'+escapeHtml(r.number)+'</span><span class="rh-total">¢'+formatCedis(r.total)+'</span></div>'+receiptStatusChipsHtml(r)+'<div class="rh-meta">'+when+'</div><ul class="rh-items">'+itemsHtml+'</ul><button class="receipt-history-share" data-share-receipt="'+idx+'">Share as image</button><button class="receipt-copy-btn" data-copy-receipt="'+idx+'">Copy</button><button type="button" class="receipt-customer-edit" data-customer-receipt="'+idx+'" aria-label="Edit customer details">✎</button>'+customerInfoHtml(r)+receiptDiscountChipHtml(r)+'</div>';
     }).join('');
     if(filtered.length>visible.length){
       html += '<button class="receipt-load-more" type="button" id="receipt-load-more">Load more <small>('+visible.length+' of '+filtered.length+')</small></button>';
@@ -4109,6 +4134,13 @@ function renderHistory(){
     if (e.target.closest("#settlement-debt-tab")) { settlementView='debt'; renderSettlementList(); return; }
     if (e.target.closest("#settlement-change-tab")) { settlementView='change'; renderSettlementList(); return; }
     if (e.target.closest("#settlement-momo-tab")) { settlementView='momo'; renderSettlementList(); return; }
+    var se=e.target.closest('[data-settlement-edit-type]');if(se){e.stopPropagation();return openSettlementEditor(se.dataset.settlementEditType,se.dataset.settlementEditId)}
+    var ce=e.target.closest('[data-customer-receipt]');if(ce){e.stopPropagation();return openCustomerEditor(Number(ce.dataset.customerReceipt))}
+    if(e.target.closest('#receipt-customer-edit-current')){var ci=receipts.findIndex(function(r){return String(r.receiptId||'')===String(currentReceiptCustomerId||'')});if(ci>=0)return openCustomerEditor(ci);return}
+    if(e.target.closest('#settlement-edit-close')||e.target.closest('#settlement-edit-cancel')||e.target===document.getElementById('settlement-edit-overlay')){closeSettlementEditor();return}
+    if(e.target.closest('#settlement-edit-save'))return saveSettlementEditor()
+    if(e.target.closest('#customer-edit-close')||e.target.closest('#customer-edit-cancel')||e.target===document.getElementById('customer-edit-overlay')){closeCustomerEditor();return}
+    if(e.target.closest('#customer-edit-save'))return saveCustomerEditor()
     var settlementDone=e.target.closest('[data-settlement-complete]');
     if (settlementDone) { return completeSettlement(Number(settlementDone.dataset.settlementComplete)); }
     if (e.target.closest("#momo-display-theme")) { toggleMomoDisplayTheme(); return; }
@@ -4145,6 +4177,7 @@ function renderHistory(){
     var statusChip=e.target.closest('[data-status-chip]');
     if (statusChip) { openStatusPopup(statusChip.dataset.statusChip, statusChip.dataset.statusId); return; }
     if (e.target.closest("#status-popup-close") || e.target === document.getElementById('status-popup-overlay')) { closeStatusPopup(); return; }
+    if (e.target.closest("#status-popup-edit")) { var et=statusPopupType,ei=statusPopupId; closeStatusPopup(); return openSettlementEditor(et,ei); }
     if (e.target.closest("#status-popup-settle")) { return settleStatusPopup(); }
     var settleChip=e.target.closest('[data-settle-chip]');
     if (settleChip) {
@@ -4252,7 +4285,7 @@ function renderHistory(){
   document.getElementById('entry-input').addEventListener('input', function(){ document.getElementById('entry-error').hidden = true; });
   document.getElementById('entry-input').addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); saveSettlementEntry(); } });
 
-  // v9.8.6 — name editor wiring
+  // v9.8.7 — name editor wiring
   document.getElementById('name-save').addEventListener('click', function(){ saveNameEditor(false); });
   document.getElementById('name-remove').addEventListener('click', function(){ saveNameEditor(true); });
   document.getElementById('name-cancel').addEventListener('click', closeNameEditor);
